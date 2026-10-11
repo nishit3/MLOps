@@ -1,0 +1,2 @@
+# The repo-root .gitignore ignores .env, but this lab's configuration lives there
+!.env

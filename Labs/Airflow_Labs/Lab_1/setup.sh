@@ -1,18 +1,16 @@
 #!/bin/bash
+# One-step setup for Linux/macOS (Windows: follow the README steps in PowerShell).
 set -e
 
-# Remove existing .env file if it exists
-rm -f .env
-rm -rf ./logs ./plugins ./config
+mkdir -p ./logs ./plugins ./working_data
 
-# Stop and remove containers, networks, and volumes
-docker compose down -v
+# On Linux, run Airflow as your own user so files in logs/ and working_data/ are yours.
+if [ "$(uname)" = "Linux" ]; then
+  sed -i "s/^AIRFLOW_UID=.*/AIRFLOW_UID=$(id -u)/" .env
+fi
 
-# Create required Airflow directories
-mkdir -p ./logs ./plugins ./config
-
-# Write the current user's UID into .env
-echo "AIRFLOW_UID=$(id -u)" > .env
-
-# Run airflow CLI to show current config
-docker compose run --rm airflow-cli airflow config list
+docker compose down -v --remove-orphans
+docker compose build
+docker compose up airflow-init
+docker compose up -d
+echo "Airflow is starting: open http://localhost:8080 (login: airflow / airflow) in about a minute."

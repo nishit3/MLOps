@@ -1,0 +1,10 @@
+# Runtime output (recreated on every run)
+logs/
+working_data/
+plugins/
+__pycache__/
+.pytest_cache/
+
+# The repo-root .gitignore ignores these, but this lab needs them to run
+!docker-compose.yaml
+!.env
