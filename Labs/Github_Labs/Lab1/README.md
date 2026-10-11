@@ -1,4 +1,42 @@
-# LAB1 - MLOps (IE-7374) 
+# LAB1 - MLOps (IE-7374) (DADS-7305)
+
+## My Changes
+
+This lab started from the course repo; below is everything I changed and why.
+
+### 1. Calculator (`src/calculator.py`)
+- Renamed `fun1`–`fun4` to `add`, `subtract`, `multiply`, `add_three` so the code is self-describing.
+- Moved input checks into one shared `_validate()` helper. It now also rejects booleans (Python treats `True`/`False` as ints, so the original accepted `fun1(True, 1)`).
+- `add_three` (old `fun4`) now validates its inputs; the original skipped this.
+- Wrong input types now raise `TypeError` instead of `ValueError`, following Python convention (flagged by ruff's `TRY004` rule). `ValueError` is kept for bad values of the right type, e.g. `mean([])`.
+- Added new functions: `divide` (raises `ZeroDivisionError` on 0), `power` (guards against `0 ** negative`), and `mean` (average of a non-empty list/tuple).
+
+### 2. Tests
+- **pytest (`test/test_pytest.py`)**: rewritten with `@pytest.mark.parametrize`, so each input case is its own test. Added tests for the new functions and for error cases using `pytest.raises` (bad types, booleans, divide-by-zero, empty list). Float math is checked with `pytest.approx`.
+- **unittest (`test/test_unittest.py`)**: covers the new functions and error cases, using `subTest` to loop over bad inputs. Removed the `sys.path` hack since the tests are run from the `Lab1` folder.
+
+### 3. CI/CD pipeline (`.github/workflows/lab1_ci.yml`)
+Replaced the two original workflows with a single pipeline:
+- **Fixed bugs in the original**: the files sat in `Lab1/workflows/`, which GitHub never reads; the pytest file had a typo (`run-nam`) and an invalid `branches` + `branches-ignore` combination; `upload-artifact@v2` is shut down; Python 3.8 is end-of-life.
+- **Lint job**: runs `ruff` first; tests only run if linting passes.
+- **Test matrix**: runs on Python 3.10, 3.11 and 3.12 in parallel.
+- **Coverage gate**: `pytest-cov` fails the build if coverage of `src/` drops below 90%.
+- **Reports**: uploads the JUnit test report and coverage XML as artifacts per Python version.
+- **Triggers**: runs on push and pull requests to `main`, only when `Lab1/` changes, plus a manual "Run workflow" button. pip downloads are cached for faster runs.
+- Because `Lab1` is a subfolder of my repo, all steps run with `working-directory: Lab1`.
+
+### Running locally
+```
+cd Lab1
+pip install -r requirements.txt
+ruff check src test
+pytest --cov=src --cov-report=term-missing
+python -m unittest test.test_unittest -v
+```
+
+---
+
+*Original lab instructions below.*
 
 This lab focuses on 5 modules, which includes creating a virtual environment, creating a GitHub repository, creating Python files, creating test files using pytest and unittest, and implementing GitHub Actions.
 
