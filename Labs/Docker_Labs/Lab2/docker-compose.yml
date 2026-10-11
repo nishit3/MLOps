@@ -1,40 +1,56 @@
-services:
-  # Service 1: Train the model
-  model-training:
-    image: python:3.10-slim
-    container_name: ml_trainer
-    working_dir: /app
-    volumes:
-      - ./src:/app/src
-      - ./requirements.txt:/app/requirements.txt
-      - model_exchange:/exchange   # Shared volume mount
-    # Run training -> Copy result to shared folder
-    command: >
-      sh -c "pip install -r requirements.txt &&
-             python src/model_training.py &&
-             cp my_model.keras /exchange/my_model.keras"
+# Train -> share model through a volume -> serve -> verify:
+#   docker compose up --build          (smoke-test prints ALL CHECKS PASSED, serving stays up)
+#   docker compose run --rm --no-deps smoke-test   (re-run the test; exit code 0 = pass)
+# All tunable values come from .env (variable substitution below).
+name: penguin-classifier
 
-  # Service 2: Serve the model
-  serving:
-    image: python:3.10-slim
-    container_name: ml_serving
-    working_dir: /app
-    ports:
-      - "80:80"
+services:
+  # 1) Train the model and write model.keras + metadata.json into the shared volume.
+  #    Exits non-zero if the quality gate (MIN_ACCURACY) fails.
+  trainer:
+    build:
+      context: .
+      target: model_training
+    image: penguin-trainer:${IMAGE_TAG:-1.0}
+    environment:
+      EPOCHS: ${EPOCHS:-200}
+      MODEL_CANDIDATES: ${MODEL_CANDIDATES:-16;32,16;64,32,16}
+      DROPOUT: ${DROPOUT:-0.1}
+      MODEL_VERSION: ${MODEL_VERSION:-1.0.0}
+      MIN_ACCURACY: ${MIN_ACCURACY:-0.90}
     volumes:
-      - ./src:/app/src
-      - ./requirements.txt:/app/requirements.txt
-      - ./src/templates:/app/templates
-      - ./src/statics:/app/statics
-      - model_exchange:/exchange   # Shared volume mount
+      - model_store:/models
+
+  # 2) Serve predictions. Starts only if training succeeded; mounts the model read-only.
+  serving:
+    build:
+      context: .
+      target: serving_runtime
+    image: penguin-serving:${IMAGE_TAG:-1.0}
+    environment:
+      PORT: ${PORT:-8000}
+    ports:
+      - "${HOST_PORT:-8080}:${PORT:-8000}"
+    volumes:
+      - model_store:/models:ro
     depends_on:
-      model-training:
+      trainer:
         condition: service_completed_successfully
-    # Copy result FROM shared folder -> Run server
-    command: >
-      sh -c "pip install --trusted-host pypi.python.org -r requirements.txt &&
-             cp /exchange/my_model.keras ./my_model.keras &&
-             python src/main.py"
+    restart: unless-stopped
+    mem_limit: 2g
+
+  # 3) Black-box test over the compose network. Starts only once serving is healthy
+  #    (HEALTHCHECK defined in the Dockerfile). Uses the stock python image + stdlib.
+  smoke-test:
+    image: python:3.10-slim
+    environment:
+      BASE_URL: http://serving:${PORT:-8000}
+    volumes:
+      - ./tests:/tests:ro
+    command: ["python", "/tests/smoke_test.py"]
+    depends_on:
+      serving:
+        condition: service_healthy
 
 volumes:
-  model_exchange:
+  model_store:

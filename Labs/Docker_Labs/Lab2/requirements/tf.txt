@@ -1,0 +1,3 @@
+# Shared by BOTH images (installed once in the tf_base stage, reused as a common layer)
+tensorflow==2.15.0
+numpy==1.26.4

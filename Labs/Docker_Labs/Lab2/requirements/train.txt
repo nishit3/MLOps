@@ -1,0 +1,3 @@
+# Training-only extras (never installed in the serving image)
+pandas==2.1.4
+scikit-learn==1.3.2

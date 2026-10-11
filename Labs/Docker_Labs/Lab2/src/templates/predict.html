@@ -1,329 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Iris | AI Classifier</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #00f2ff; /* Cyber Cyan */
-            --secondary: #bd00ff; /* Neon Purple */
-            --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f172a);
-            color: #e2e8f0;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-        }
-
-        /* Ambient Background Glow */
-        body::before {
-            content: '';
-            position: absolute;
-            top: -10%;
-            left: -10%;
-            width: 40%;
-            height: 40%;
-            background: radial-gradient(circle, var(--secondary), transparent 70%);
-            opacity: 0.2;
-            filter: blur(80px);
-            z-index: -1;
-            animation: float 10s infinite alternate;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            bottom: -10%;
-            right: -10%;
-            width: 40%;
-            height: 40%;
-            background: radial-gradient(circle, var(--primary), transparent 70%);
-            opacity: 0.2;
-            filter: blur(80px);
-            z-index: -1;
-            animation: float 10s infinite alternate-reverse;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            width: 90%;
-            max-width: 450px;
-            position: relative;
-        }
-
-        /* Glass Card Effect */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-            letter-spacing: 2px;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-            color: #94a3b8;
-            font-weight: 500;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
-            color: #fff;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            box-sizing: border-box; /* Fixes padding width issue */
-        }
-
-        input[type="number"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
-            background: rgba(0, 0, 0, 0.4);
-        }
-
-        button.submit-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        button.submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 242, 255, 0.3);
-        }
-
-        button.submit-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Prediction Result Area */
-        .result-container {
-            margin-top: 20px;
-            text-align: center;
-            overflow: hidden;
-            transition: all 0.5s ease;
-            opacity: 0;
-            transform: translateY(20px);
-            display: none; /* Hidden by default */
-        }
-
-        .result-container.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .prediction-badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 50px;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            font-family: 'Orbitron', sans-serif;
-            margin-bottom: 15px;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
-        }
-
-        .flower-card {
-            background: rgba(0,0,0,0.3);
-            border-radius: 16px;
-            padding: 10px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .flower-image {
-            width: 100%;
-            max-height: 200px;
-            object-fit: cover;
-            border-radius: 12px;
-            display: block;
-        }
-
-        @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(20px, 20px); }
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            display: none;
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-    </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penguin Species Classifier</title>
+  <!-- No external fonts or scripts: the page works even if the container has no internet. -->
+  <style>
+    :root {
+      --primary: #00f2ff;
+      --secondary: #bd00ff;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: #e2e8f0;
+      background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f172a);
+      padding: 2rem 1rem;
+    }
+    .container { width: 100%; max-width: 480px; display: grid; gap: 1.5rem; }
+    .card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 20px; padding: 2rem;
+      backdrop-filter: blur(16px); box-shadow: 0 25px 50px -12px rgba(0,0,0,.5);
+    }
+    h1 {
+      margin: 0 0 .25rem; text-align: center; font-size: 1.6rem; letter-spacing: 1px;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .subtitle { text-align: center; color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    label { display: block; font-size: .75rem; color: var(--muted); text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: .35rem; }
+    input, select {
+      width: 100%; padding: 10px 12px; border-radius: 10px; font-size: 1rem;
+      background: rgba(0,0,0,.25); color: #fff; border: 1px solid var(--glass-border);
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+    button {
+      width: 100%; margin-top: 1.5rem; padding: 14px; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; letter-spacing: 2px; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    #result { display: none; }
+    #result.active { display: block; }
+    #species { font-size: 1.8rem; text-align: center; margin: 0 0 .25rem; }
+    #confidence { text-align: center; color: var(--primary); margin: 0 0 1.25rem; }
+    .bar-row { margin-bottom: .75rem; }
+    .bar-label { display: flex; justify-content: space-between; font-size: .85rem; margin-bottom: .25rem; }
+    .bar { height: 10px; border-radius: 5px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .bar > div { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary));
+                 transition: width .4s ease; }
+    #error { color: #f87171; text-align: center; margin-top: 1rem; min-height: 1.2em; }
+    footer { text-align: center; color: var(--muted); font-size: .75rem; }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="card">
+      <h1>PENGUIN CLASSIFIER</h1>
+      <p class="subtitle">Adelie · Chinstrap · Gentoo — TensorFlow model served from Docker</p>
 
-    <div class="container">
-        <div class="glass-card">
-            <h1>NEURAL IRIS</h1>
-            
-            <form id="predictionForm">
-                <div class="input-group">
-                    <label for="sepal_length">Sepal Length</label>
-                    <input type="number" id="sepal_length" step="0.01" placeholder="0.00" required>
-                </div>
-
-                <div class="input-group">
-                    <label for="sepal_width">Sepal Width</label>
-                    <input type="number" id="sepal_width" step="0.01" placeholder="0.00" required>
-                </div>
-
-                <div class="input-group">
-                    <label for="petal_length">Petal Length</label>
-                    <input type="number" id="petal_length" step="0.01" placeholder="0.00" required>
-                </div>
-
-                <div class="input-group">
-                    <label for="petal_width">Petal Width</label>
-                    <input type="number" id="petal_width" step="0.01" placeholder="0.00" required>
-                </div>
-
-                <button type="submit" class="submit-btn">
-                    <span id="btnText">ANALYZE</span>
-                    <div class="spinner" id="btnSpinner"></div>
-                </button>
-            </form>
+      <form id="predictionForm">
+        <div class="grid">
+          <div><label for="bill_length_mm">Bill length (mm)</label>
+            <input type="number" id="bill_length_mm" step="0.1" min="0" placeholder="44.0" required></div>
+          <div><label for="bill_depth_mm">Bill depth (mm)</label>
+            <input type="number" id="bill_depth_mm" step="0.1" min="0" placeholder="17.0" required></div>
+          <div><label for="flipper_length_mm">Flipper length (mm)</label>
+            <input type="number" id="flipper_length_mm" step="1" min="0" placeholder="200" required></div>
+          <div><label for="body_mass_g">Body mass (g)</label>
+            <input type="number" id="body_mass_g" step="1" min="0" placeholder="4200" required></div>
+          {% for feature, values in metadata.categorical_features.items() %}
+          <div><label for="{{ feature }}">{{ feature | capitalize }}</label>
+            <select id="{{ feature }}" required>
+              {% for value in values %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+            </select></div>
+          {% endfor %}
         </div>
-
-        <div id="resultArea" class="glass-card result-container">
-            <div class="prediction-badge">CONFIDENCE: HIGH</div>
-            <h2 id="predictedClass" style="margin: 10px 0; color: #fff; font-family: 'Orbitron', sans-serif;"></h2>
-            
-            <div class="flower-card">
-                <img src="" id="flowerImage" class="flower-image" alt="Iris Prediction"
-                data-setosa="{{ url_for('static', filename='setosa.jpeg') }}"
-                data-versicolor="{{ url_for('static', filename='versicolor.jpeg') }}"
-                data-virginica="{{ url_for('static', filename='virginica.jpeg') }}" />
-            </div>
-        </div>
+        <button type="submit" id="submitBtn">CLASSIFY</button>
+        <div id="error"></div>
+      </form>
     </div>
 
-    <script>
-        $(document).ready(function() {
-            $('#predictionForm').on('submit', function(event) {
-                event.preventDefault(); 
-                
-                // UI Loading State
-                var $btn = $('.submit-btn');
-                var $text = $('#btnText');
-                var $spinner = $('#btnSpinner');
-                
-                $text.hide();
-                $spinner.show();
-                $btn.css('opacity', '0.7');
+    <div class="card" id="result">
+      <h2 id="species"></h2>
+      <p id="confidence"></p>
+      <div id="bars"></div>
+    </div>
 
-                var formData = {
-                    'sepal_length': $('#sepal_length').val(),
-                    'sepal_width': $('#sepal_width').val(),
-                    'petal_length': $('#petal_length').val(),
-                    'petal_width': $('#petal_width').val()
-                };
+    <footer>
+      Model v{{ metadata.model_version }} · hidden layers {{ metadata.selected_model.hidden_units }}
+      · test accuracy {{ "%.1f" | format(metadata.test_accuracy * 100) }}% · trained {{ metadata.trained_at }}
+    </footer>
+  </div>
 
-                $.ajax({
-                    type: 'POST',
-                    url: '/predict',
-                    data: formData,
-                    dataType: 'json',
-                    encode: true
-                }).done(function(data) {
-                    
-                    // Update Text
-                    $('#predictedClass').text(data.predicted_class.toUpperCase());
-                    
-                    // Update Image
-                    var imageUrl = '';
-                    switch (data.predicted_class) {
-                        case 'Setosa':
-                            imageUrl = $('#flowerImage').data('setosa');
-                            break;
-                        case 'Versicolor':
-                            imageUrl = $('#flowerImage').data('versicolor');
-                            break;
-                        case 'Virginica':
-                            imageUrl = $('#flowerImage').data('virginica');
-                            break;
-                    }
-                    $('#flowerImage').attr('src', imageUrl);
+  <script>
+    const fields = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "island", "sex"];
+    const form = document.getElementById("predictionForm");
+    const btn = document.getElementById("submitBtn");
+    const errorBox = document.getElementById("error");
 
-                    // Show Result with animation
-                    $('#resultArea').addClass('active');
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "CLASSIFYING…";
 
-                    // Reset Button
-                    $text.show();
-                    $spinner.hide();
-                    $btn.css('opacity', '1');
+      const payload = {};
+      fields.forEach((f) => { payload[f] = document.getElementById(f).value; });
 
-                }).fail(function(data) {
-                    alert('SYSTEM ERROR: Neural Link Disconnected.');
-                    $text.show();
-                    $spinner.hide();
-                    $btn.css('opacity', '1');
-                });
-            });
+      try {
+        const resp = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
-    </script>
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || "Prediction failed");
+        showResult(data);
+      } catch (err) {
+        errorBox.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "CLASSIFY";
+      }
+    });
+
+    function showResult(data) {
+      document.getElementById("species").textContent = data.predicted_class;
+      document.getElementById("confidence").textContent =
+        `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+
+      const bars = document.getElementById("bars");
+      bars.replaceChildren();
+      Object.entries(data.probabilities).forEach(([name, p]) => {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        const n = document.createElement("span"); n.textContent = name;
+        const v = document.createElement("span"); v.textContent = `${(p * 100).toFixed(1)}%`;
+        label.append(n, v);
+        const bar = document.createElement("div"); bar.className = "bar";
+        const fill = document.createElement("div"); fill.style.width = `${p * 100}%`;
+        bar.append(fill);
+        row.append(label, bar);
+        bars.append(row);
+      });
+      document.getElementById("result").classList.add("active");
+    }
+  </script>
 </body>
 </html>
