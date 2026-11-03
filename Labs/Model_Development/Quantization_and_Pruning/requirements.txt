@@ -1,0 +1,9 @@
+# Pinned together: TF-MOT supports Keras 2 only, so tf-keras must match the TensorFlow version.
+tensorflow==2.17.1
+tf-keras==2.17.0
+tensorflow-model-optimization==0.8.0
+numpy==1.26.4
+pandas==2.2.3
+matplotlib==3.9.2
+notebook==7.2.2
+ipykernel==6.29.5
